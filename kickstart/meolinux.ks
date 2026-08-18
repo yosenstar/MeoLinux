@@ -27,8 +27,12 @@ firewall --enabled --service=mdns
 ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///ostree/repo" --ref="fedora/44/x86_64/silverblue"
 
 # Disk partitioning
-# Using automatic partitioning with BTRFS
-autopart --type=btrfs
+zerombr
+clearpart --all --initlabel
+part /boot/efi --fstype=fat32 --size=600 --ondisk=sda
+part /boot --fstype=xfs --size=1024 --ondisk=sda
+part / --fstype=xfs --size=20480 --grow --ondisk=sda
+part /home --fstype=xfs --size=10240 --ondisk=sda
 
 # Skip interactive setup
 skipx
