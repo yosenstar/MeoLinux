@@ -1,0 +1,67 @@
+name: Build MeoLinux ISO
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            lorax \
+            livemedia-creator \
+            pykickstart \
+            mkisofs \
+            xorriso \
+            qemu-system-x86
+
+      - name: Validate kickstart file
+        run: |
+          ksvalidator kickstart/meolinux.ks || echo "Warning: ksvalidator returned warnings"
+
+      - name: Build ISO
+        run: |
+          sudo mkdir -p build
+          sudo livemedia-creator --make-iso \
+            --ks kickstart/meolinux.ks \
+            --no-virt \
+            --resultdir ./build/ \
+            --project "MeoLinux" \
+            --releasever 44 \
+            --iso-name "MeoLinux-44-x86_64.iso"
+
+      - name: Generate checksum
+        run: |
+          cd build
+          sha256sum *.iso > MeoLinux-44-x86_64.iso.sha256
+
+      - name: Upload ISO artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MeoLinux-ISO
+          path: build/*.iso
+          retention-days: 30
+
+      - name: Release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            build/*.iso
+            build/*.sha256
+          draft: true
+          generate_release_notes: true

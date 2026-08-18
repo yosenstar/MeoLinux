@@ -1,0 +1,16 @@
+# Build output
+build/
+*.iso
+*.iso.sha256
+
+# Temporary files
+*.tmp
+*.log
+tmp/
+
+# Editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
