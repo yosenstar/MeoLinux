@@ -42,6 +42,12 @@ firstboot --disable
 # Reboot after installation
 reboot
 
+# Required packages for live ISO build
+%packages
+dracut-live
+dracut-network
+%end
+
 # ---- Post-installation scripts ----
 
 # Configure Chinese mirrors and repos
