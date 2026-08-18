@@ -31,39 +31,22 @@ jobs:
                 lorax lorax-lmc-novirt pykickstart xorriso \
                 anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
                 rpm-ostree dracut-live dracut-network \
-                ostree wget fuse-libs &&
+                ostree ostree-fuse wget &&
 
               ksvalidator /workspace/kickstart/meolinux.ks &&
 
-              echo '=== Downloading Fedora Silverblue 44 ISO ==='
-              wget -q --tries=3 \
-                'https://dl.fedoraproject.org/pub/fedora/linux/releases/44/Spins/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44.iso' \
-                -O /tmp/fedora-silverblue.iso || {
-                  echo 'Primary mirror failed, trying alternative...'
-                  wget -q --tries=3 \
-                    'https://mirror.us-midwest-1.nexcess.net/fedora/linux/releases/44/Spins/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44.iso' \
-                    -O /tmp/fedora-silverblue.iso
-                } &&
+              echo '=== Creating local ostree repo and pulling content ==='
+              mkdir -p /ostree/repo
+              ostree --repo=/ostree/repo init --mode=archive-z2
 
-              echo '=== Extracting ostree repo from ISO ==='
-              mkdir -p /tmp/sb-extract
-              xorriso -osirrox on -indev /tmp/fedora-silverblue.iso -extract / /tmp/sb-extract 2>&1 | tail -20 &&
+              echo '=== Adding Fedora remote ==='
+              ostree --repo=/ostree/repo remote add --if-not-exists \
+                fedora https://ostree.fedoraproject.org/silverblue
 
-              echo '=== Finding ostree repo ==='
-              find /tmp/sb-extract -maxdepth 4 -name 'objects' -type d 2>/dev/null | head -5 &&
-              find /tmp/sb-extract -maxdepth 4 -name 'config' -path '*/repo/*' 2>/dev/null | head -5 &&
-
-              echo '=== Copying ostree repo ==='
-              if [ -d /tmp/sb-extract/ostree/repo/objects ]; then
-                cp -a /tmp/sb-extract/ostree/repo /ostree/repo
-              else
-                echo 'ERROR: ostree repo not found in ISO'
-                ls -la /tmp/sb-extract/ 2>/dev/null
-                find /tmp/sb-extract -maxdepth 3 -type d 2>/dev/null | head -30
-                exit 1
-              fi &&
-
-              rm -f /tmp/fedora-silverblue.iso &&
+              echo '=== Pulling Fedora Silverblue 44 commit ==='
+              ostree --repo=/ostree/repo pull \
+                --depth=-1 \
+                fedora fedora/44/x86_64/silverblue &&
 
               echo '=== Building MeoLinux ISO ==='
               livemedia-creator --make-iso \
