@@ -14,32 +14,27 @@ jobs:
     permissions:
       contents: write
 
-    container:
-      image: fedora:44
-      options: --privileged
-
     steps:
-      - name: Install build dependencies
-        run: |
-          dnf install -y lorax lorax-lmc-novirt pykickstart xorriso git
-
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Validate kickstart file
+      - name: Build ISO in Fedora container
         run: |
-          ksvalidator kickstart/meolinux.ks
-
-      - name: Build ISO
-        run: |
-          mkdir -p build
-          livemedia-creator --make-iso \
-            --ks kickstart/meolinux.ks \
-            --no-virt \
-            --resultdir ./build/ \
-            --project "MeoLinux" \
-            --releasever 44 \
-            --iso-name "MeoLinux-44-x86_64.iso"
+          docker run --privileged \
+            -v ${{ github.workspace }}:/workspace \
+            -w /workspace \
+            fedora:44 bash -c "
+              dnf install -y lorax lorax-lmc-novirt pykickstart xorriso &&
+              ksvalidator kickstart/meolinux.ks &&
+              mkdir -p build &&
+              livemedia-creator --make-iso \
+                --ks kickstart/meolinux.ks \
+                --no-virt \
+                --resultdir ./build/ \
+                --project MeoLinux \
+                --releasever 44 \
+                --iso-name MeoLinux-44-x86_64.iso
+            "
 
       - name: Generate checksum
         run: |
