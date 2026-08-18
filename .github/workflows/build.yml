@@ -24,12 +24,36 @@ jobs:
           docker run --privileged \
             -v ${{ github.workspace }}:/workspace \
             fedora:44 bash -c "
+              set -ex
+
+              echo '=== Installing dependencies ==='
               dnf install -y \
                 lorax lorax-lmc-novirt pykickstart xorriso \
                 anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
                 rpm-ostree dracut-live dracut-network \
-                ostree &&
+                ostree wget fuse-libs &&
+
               ksvalidator /workspace/kickstart/meolinux.ks &&
+
+              echo '=== Downloading Fedora Silverblue 44 ostree repo ==='
+              mkdir -p /tmp/sb-iso
+              wget -q --tries=3 \
+                'https://dl.fedoraproject.org/pub/fedora/linux/releases/44/Spins/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44.iso' \
+                -O /tmp/fedora-silverblue.iso || {
+                  echo 'Primary mirror failed, trying alternative...'
+                  wget -q --tries=3 \
+                    'https://mirror.us-midwest-1.nexcess.net/fedora/linux/releases/44/Spins/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44.iso' \
+                    -O /tmp/fedora-silverblue.iso
+                } &&
+
+              echo '=== Extracting ostree repo from ISO ==='
+              mkdir -p /tmp/sb-mount
+              mount -o loop,ro /tmp/fedora-silverblue.iso /tmp/sb-mount
+              cp -a /tmp/sb-mount/ostree/repo /ostree/repo
+              umount /tmp/sb-mount
+              rm -f /tmp/fedora-silverblue.iso &&
+
+              echo '=== Building MeoLinux ISO ==='
               livemedia-creator --make-iso \
                 --ks /workspace/kickstart/meolinux.ks \
                 --no-virt \
@@ -37,6 +61,7 @@ jobs:
                 --project MeoLinux \
                 --releasever 44 \
                 --iso-name MeoLinux-44-x86_64.iso &&
+
               cp /tmp/meolinux-build/*.iso /workspace/build/
             "
 
