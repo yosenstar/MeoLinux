@@ -21,19 +21,14 @@ jobs:
     steps:
       - name: Install build dependencies
         run: |
-          dnf install -y \
-            lorax \
-            lorax-lmc-novirt \
-            pykickstart \
-            xorriso \
-            qemu-system-x86 \
-            git
+          dnf install -y lorax lorax-lmc-novirt pykickstart xorriso git
 
       - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Validate kickstart file
-        run: ksvalidator kickstart/meolinux.ks || echo "Warning: ksvalidator returned warnings"
+        run: |
+          ksvalidator kickstart/meolinux.ks
 
       - name: Build ISO
         run: |
