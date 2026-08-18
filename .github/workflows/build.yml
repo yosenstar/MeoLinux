@@ -20,22 +20,20 @@ jobs:
 
       - name: Build ISO in Fedora container
         run: |
+          mkdir -p build
           docker run --privileged \
             -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
             fedora:44 bash -c "
               dnf install -y lorax lorax-lmc-novirt pykickstart xorriso &&
-              ksvalidator kickstart/meolinux.ks &&
-              mkdir -p /tmp/meolinux-build &&
+              ksvalidator /workspace/kickstart/meolinux.ks &&
               livemedia-creator --make-iso \
-                --ks kickstart/meolinux.ks \
+                --ks /workspace/kickstart/meolinux.ks \
                 --no-virt \
                 --resultdir /tmp/meolinux-build/ \
                 --project MeoLinux \
                 --releasever 44 \
                 --iso-name MeoLinux-44-x86_64.iso &&
-              mkdir -p /workspace/build &&
-              cp /tmp/meolinux-build/*.iso /workspace/build/ 2>/dev/null || true
+              cp /tmp/meolinux-build/*.iso /workspace/build/
             "
 
       - name: Generate checksum
