@@ -31,7 +31,7 @@ ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///ostree/re
 
 # Disk partitioning
 # Using automatic partitioning with BTRFS
-autopart --type=btrfs --fstype=xfs
+autopart --type=btrfs
 
 # Skip interactive setup
 skipx
