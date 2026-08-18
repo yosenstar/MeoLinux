@@ -24,7 +24,11 @@ jobs:
           docker run --privileged \
             -v ${{ github.workspace }}:/workspace \
             fedora:44 bash -c "
-              dnf install -y lorax lorax-lmc-novirt pykickstart xorriso &&
+              dnf install -y \
+                lorax lorax-lmc-novirt pykickstart xorriso \
+                anaconda anaconda-rpm-ostree anaconda-install-img-deps \
+                rpm-ostree dracut-live dracut-network \
+                fedora-repos ostree &&
               ksvalidator /workspace/kickstart/meolinux.ks &&
               livemedia-creator --make-iso \
                 --ks /workspace/kickstart/meolinux.ks \
