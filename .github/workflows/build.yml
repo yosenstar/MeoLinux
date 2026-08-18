@@ -20,6 +20,7 @@ jobs:
 
       - name: Build ISO in Fedora container
         run: |
+          rm -rf build
           docker run --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
