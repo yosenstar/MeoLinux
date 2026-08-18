@@ -14,8 +14,11 @@ timezone Asia/Shanghai --utc
 # Network configuration
 network --bootproto=dhcp --activate --onboot=yes
 
-# Root password (user should set this or use --lock)
-# rootpw --lock
+# Root password (insecure, for live image only - user should change on first boot)
+rootpw --plaintext --lock meolinux
+
+# User creation
+user --name=meo --groups=wheel --plaintext --password=meolinux
 
 # SELinux
 selinux --enforcing
