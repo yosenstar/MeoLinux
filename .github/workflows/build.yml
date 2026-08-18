@@ -31,7 +31,7 @@ jobs:
                 lorax lorax-lmc-novirt pykickstart xorriso \
                 anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
                 rpm-ostree dracut-live dracut-network \
-                ostree p7zip p7zip-plugins fuse-libs &&
+                ostree wget fuse-libs &&
 
               ksvalidator /workspace/kickstart/meolinux.ks &&
 
@@ -46,17 +46,22 @@ jobs:
                 } &&
 
               echo '=== Extracting ostree repo from ISO ==='
-              mkdir -p /ostree/repo
-              cd /tmp
-              7z x -y /tmp/fedora-silverblue.iso -o/tmp/sb-extract &&
+              mkdir -p /tmp/sb-extract
+              xorriso -osirrox on -indev /tmp/fedora-silverblue.iso -extract / /tmp/sb-extract 2>&1 | tail -20 &&
 
-              echo '=== Looking for ostree repo in extracted ISO ==='
-              find /tmp/sb-extract -name 'repo' -type d 2>/dev/null | head -5 &&
+              echo '=== Finding ostree repo ==='
+              find /tmp/sb-extract -maxdepth 4 -name 'objects' -type d 2>/dev/null | head -5 &&
+              find /tmp/sb-extract -maxdepth 4 -name 'config' -path '*/repo/*' 2>/dev/null | head -5 &&
 
-              echo '=== Checking images/ directory ==='
-              ls -la /tmp/sb-extract/images/ 2>/dev/null || true
-              ls -la /tmp/sb-extract/Packages/ 2>/dev/null || true
-              find /tmp/sb-extract -maxdepth 3 -type d 2>/dev/null &&
+              echo '=== Copying ostree repo ==='
+              if [ -d /tmp/sb-extract/ostree/repo/objects ]; then
+                cp -a /tmp/sb-extract/ostree/repo /ostree/repo
+              else
+                echo 'ERROR: ostree repo not found in ISO'
+                ls -la /tmp/sb-extract/ 2>/dev/null
+                find /tmp/sb-extract -maxdepth 3 -type d 2>/dev/null | head -30
+                exit 1
+              fi &&
 
               rm -f /tmp/fedora-silverblue.iso &&
 
