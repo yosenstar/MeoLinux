@@ -2,9 +2,6 @@
 # MeoLinux Kickstart File
 # Based on Fedora Silverblue 44 for Chinese desktop users
 
-# Use graphical install
-graphical
-
 # keyboard
 keyboard --vckeymap=us --xlayouts='us'
 
