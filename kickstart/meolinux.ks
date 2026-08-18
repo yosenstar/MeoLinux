@@ -26,8 +26,8 @@ selinux --enforcing
 # Firewall
 firewall --enabled --service=mdns
 
-# OSTree setup - Fedora Silverblue 44
-ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///ostree/repo" --ref="fedora/44/x86_64/silverblue"
+# OSTree setup - Fedora Silverblue 44 (pull from remote registry)
+ostreecontainer --no-signature-verification --transport=registry --remote=fedora --url=quay.io/fedora/fedora-silverblue:44
 
 # Disk partitioning
 zerombr
