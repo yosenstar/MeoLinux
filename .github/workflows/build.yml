@@ -31,22 +31,26 @@ jobs:
                 lorax lorax-lmc-novirt pykickstart xorriso \
                 anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
                 rpm-ostree dracut-live dracut-network \
-                ostree ostree-fuse wget &&
+                ostree wget fuse-libs &&
 
               ksvalidator /workspace/kickstart/meolinux.ks &&
 
-              echo '=== Creating local ostree repo and pulling content ==='
-              mkdir -p /ostree/repo
-              ostree --repo=/ostree/repo init --mode=archive-z2
+              echo '=== Downloading Fedora Silverblue 44 ISO ==='
+              wget --tries=3 \
+                'https://download.fedoraproject.org/pub/fedora/linux/releases/44/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44-1.7.iso' \
+                -O /tmp/fedora-silverblue.iso &&
 
-              echo '=== Adding Fedora remote ==='
-              ostree --repo=/ostree/repo remote add --if-not-exists \
-                fedora https://ostree.fedoraproject.org/silverblue
+              echo '=== Extracting ostree repo from ISO ==='
+              mkdir -p /tmp/sb-extract
+              xorriso -osirrox on -indev /tmp/fedora-silverblue.iso -extract / /tmp/sb-extract 2>&1 | tail -5 &&
 
-              echo '=== Pulling Fedora Silverblue 44 commit ==='
-              ostree --repo=/ostree/repo pull \
-                --depth=-1 \
-                fedora fedora/44/x86_64/silverblue &&
+              echo '=== Copying ostree repo ==='
+              ls -la /tmp/sb-extract/ostree/repo/ 2>/dev/null
+              cp -a /tmp/sb-extract/ostree/repo /ostree/repo &&
+
+              echo '=== Verifying ostree repo ==='
+              ostree --repo=/ostree/repo log fedora/44/x86_64/silverblue 2>&1 | head -5 || true
+              rm -f /tmp/fedora-silverblue.iso &&
 
               echo '=== Building MeoLinux ISO ==='
               livemedia-creator --make-iso \
