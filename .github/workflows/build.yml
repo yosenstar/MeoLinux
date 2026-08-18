@@ -31,12 +31,11 @@ jobs:
                 lorax lorax-lmc-novirt pykickstart xorriso \
                 anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
                 rpm-ostree dracut-live dracut-network \
-                ostree wget fuse-libs &&
+                ostree p7zip p7zip-plugins fuse-libs &&
 
               ksvalidator /workspace/kickstart/meolinux.ks &&
 
-              echo '=== Downloading Fedora Silverblue 44 ostree repo ==='
-              mkdir -p /tmp/sb-iso
+              echo '=== Downloading Fedora Silverblue 44 ISO ==='
               wget -q --tries=3 \
                 'https://dl.fedoraproject.org/pub/fedora/linux/releases/44/Spins/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44.iso' \
                 -O /tmp/fedora-silverblue.iso || {
@@ -47,10 +46,18 @@ jobs:
                 } &&
 
               echo '=== Extracting ostree repo from ISO ==='
-              mkdir -p /tmp/sb-mount
-              mount -o loop,ro /tmp/fedora-silverblue.iso /tmp/sb-mount
-              cp -a /tmp/sb-mount/ostree/repo /ostree/repo
-              umount /tmp/sb-mount
+              mkdir -p /ostree/repo
+              cd /tmp
+              7z x -y /tmp/fedora-silverblue.iso -o/tmp/sb-extract &&
+
+              echo '=== Looking for ostree repo in extracted ISO ==='
+              find /tmp/sb-extract -name 'repo' -type d 2>/dev/null | head -5 &&
+
+              echo '=== Checking images/ directory ==='
+              ls -la /tmp/sb-extract/images/ 2>/dev/null || true
+              ls -la /tmp/sb-extract/Packages/ 2>/dev/null || true
+              find /tmp/sb-extract -maxdepth 3 -type d 2>/dev/null &&
+
               rm -f /tmp/fedora-silverblue.iso &&
 
               echo '=== Building MeoLinux ISO ==='
