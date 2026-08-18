@@ -20,11 +20,11 @@ jobs:
 
       - name: Build ISO in Fedora container
         run: |
-          rm -rf build
           docker run --privileged \
             -v ${{ github.workspace }}:/workspace \
             -w /workspace \
             fedora:44 bash -c "
+              rm -rf build &&
               dnf install -y lorax lorax-lmc-novirt pykickstart xorriso &&
               ksvalidator kickstart/meolinux.ks &&
               mkdir -p build &&
