@@ -14,29 +14,31 @@ jobs:
     permissions:
       contents: write
 
+    container:
+      image: fedora:44
+      options: --privileged
+
     steps:
+      - name: Install build dependencies
+        run: |
+          dnf install -y \
+            lorax \
+            lorax-lmc-novirt \
+            pykickstart \
+            xorriso \
+            qemu-system-x86 \
+            git
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            lorax \
-            livemedia-creator \
-            pykickstart \
-            mkisofs \
-            xorriso \
-            qemu-system-x86
-
       - name: Validate kickstart file
-        run: |
-          ksvalidator kickstart/meolinux.ks || echo "Warning: ksvalidator returned warnings"
+        run: ksvalidator kickstart/meolinux.ks || echo "Warning: ksvalidator returned warnings"
 
       - name: Build ISO
         run: |
-          sudo mkdir -p build
-          sudo livemedia-creator --make-iso \
+          mkdir -p build
+          livemedia-creator --make-iso \
             --ks kickstart/meolinux.ks \
             --no-virt \
             --resultdir ./build/ \
