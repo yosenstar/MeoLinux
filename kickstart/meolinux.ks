@@ -55,8 +55,3 @@ dracut-network
 @core
 @base-x
 %end
-
-# ---- 安装后配置脚本 ----
-%post --erroronfail --log=/root/meolinux-post.log
-echo "MeoLinux post-install completed"
-%end
