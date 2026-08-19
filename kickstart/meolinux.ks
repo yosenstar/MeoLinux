@@ -33,6 +33,12 @@ part /boot --fstype=xfs --size=1024 --ondisk=sda
 part / --fstype=xfs --size=20480 --grow --ondisk=sda
 part /home --fstype=xfs --size=10240 --ondisk=sda
 
+# Root 密码（Live 镜像使用简单密码，用户首次启动可修改）
+rootpw --plaintext meolinux
+
+# 创建默认用户 meo，加入 wheel 组（有 sudo 权限）
+user --name=meo --groups=wheel --plaintext --password=meolinux
+
 # 跳过交互式设置
 skipx
 
