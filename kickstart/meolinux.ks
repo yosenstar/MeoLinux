@@ -58,42 +58,10 @@ dracut-network
 
 # ---- 安装后配置脚本 ----
 
-# 配置中文环境和软件源
+# 基础配置（无需网络）
 %post --erroronfail --log=/root/meolinux-post.log
 #!/bin/bash
 set -ex
-
-# 设置中文语言环境
-localectl set-locale LANG=zh_CN.UTF-8
-
-# 设置时区为上海
-timedatectl set-timezone Asia/Shanghai
-
-# 启用 RPM Fusion 软件源（多媒体编解码器等）
-rpm-ostree install -y \
-  https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-44.noarch.rpm \
-  https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-44.noarch.rpm
-
-# 安装中文字体
-rpm-ostree install -y \
-  google-noto-sans-cjk-fonts \
-  google-noto-serif-cjk-fonts \
-  google-noto-sans-cjk-ttc-fonts \
-  wqy-microhei-fonts \
-  wqy-zenhei-fonts
-
-# 安装常用多媒体包
-rpm-ostree install -y \
-  ffmpeg \
-  gstreamer1-plugins-good \
-  gstreamer1-plugins-bad-free \
-  gstreamer1-plugins-ugly-free \
-  gstreamer1-libav
-
-# 安装中文输入法
-rpm-ostree install -y \
-  ibus-libpinyin \
-  ibus-rime
 
 # 设置默认语言环境
 cat > /etc/profile.d/meolinux.sh << 'EOF'
@@ -107,32 +75,68 @@ export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 EOF
 
-echo "MeoLinux 安装后配置完成"
-%end
+# 设置时区
+timedatectl set-timezone Asia/Shanghai
 
-# 安装 Flatpak 桌面应用
-%post --erroronfail --log=/root/meolinux-flatpak.log
+# 创建首次启动配置脚本
+cat > /usr/local/bin/meolinux-firstboot.sh << 'FIRSTBOOT'
 #!/bin/bash
-set -ex
+# MeoLinux 首次启动配置脚本
 
-# 添加 Flathub 应用仓库
-flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
+echo "=== MeoLinux 首次启动配置 ==="
 
-# 安装常用桌面应用
+# 启用 RPM Fusion 源
+rpm-ostree install -y \
+  https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-44.noarch.rpm \
+  https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-44.noarch.rpm || true
+
+# 安装中文字体
+rpm-ostree install -y \
+  google-noto-sans-cjk-fonts \
+  google-noto-serif-cjk-fonts \
+  wqy-microhei-fonts || true
+
+# 安装多媒体包
+rpm-ostree install -y \
+  ffmpeg \
+  gstreamer1-plugins-good || true
+
+# 安装中文输入法
+rpm-ostree install -y \
+  ibus-libpinyin || true
+
+# 添加 Flathub
+flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
+
+# 安装常用 Flatpak 应用
 flatpak install -y --user flathub \
   org.mozilla.firefox \
   org.libreoffice.LibreOffice \
-  org.gnome.Calendar \
-  org.gnome.tweaks \
-  org.gnome.Extensions \
-  com.visualstudio.code \
-  org.gimp.GIMP \
-  org.videolan.VLC \
-  org.telegram.desktop \
-  com.slack.Slack \
-  org.gnome.Calculator \
-  org.gnome.Nautilus \
-  org.gnome.TextEditor
+  org.videolan.VLC || true
 
-echo "MeoLinux Flatpak 应用安装完成"
+echo "=== 配置完成，请重启系统 ==="
+FIRSTBOOT
+chmod +x /usr/local/bin/meolinux-firstboot.sh
+
+# 添加到 systemd 首次启动服务
+cat > /etc/systemd/system/meolinux-firstboot.service << 'SERVICE'
+[Unit]
+Description=MeoLinux First Boot Configuration
+After=network-online.target
+Wants=network-online.target
+ConditionPathExists=!/var/lib/meolinux-firstboot-done
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/meolinux-firstboot.sh
+ExecStartPost=/bin/touch /var/lib/meolinux-firstboot-done
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+systemctl enable meolinux-firstboot.service 2>/dev/null || true
+
+echo "MeoLinux 安装后配置完成"
 %end
