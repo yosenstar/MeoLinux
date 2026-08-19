@@ -18,71 +18,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Build ISO in Fedora container
-        run: |
-          mkdir -p build
-          docker run --privileged \
-            -v ${{ github.workspace }}:/workspace \
-            fedora:44 bash -c "
-              set -ex
-
-              echo '=== Installing dependencies ==='
-              dnf install -y \
-                lorax lorax-lmc-novirt pykickstart xorriso \
-                anaconda anaconda-core anaconda-tui anaconda-install-img-deps \
-                rpm-ostree dracut-live dracut-network \
-                ostree wget fuse-libs squashfs-tools &&
-
-              ksvalidator /workspace/kickstart/meolinux.ks &&
-
-              echo '=== Downloading Fedora Silverblue 44 ISO ==='
-              wget --tries=3 \
-                'https://download.fedoraproject.org/pub/fedora/linux/releases/44/Silverblue/x86_64/iso/Fedora-Silverblue-ostree-x86_64-44-1.7.iso' \
-                -O /tmp/fedora-silverblue.iso &&
-
-              echo '=== Extracting install.img from ISO ==='
-              mkdir -p /tmp/sb-extract
-              xorriso -osirrox on -indev /tmp/fedora-silverblue.iso -extract /images/install.img /tmp/sb-extract/install.img 2>&1 | tail -3 &&
-
-              echo '=== Checking install.img type ==='
-              file /tmp/sb-extract/install.img &&
-
-              echo '=== Extracting install.img (squashfs) ==='
-              mkdir -p /tmp/sb-squash
-              unsquashfs -d /tmp/sb-squash /tmp/sb-extract/install.img 2>&1 | tail -5 &&
-
-              echo '=== Finding ostree repo in extracted image ==='
-              find /tmp/sb-squash -maxdepth 5 -name 'objects' -type d 2>/dev/null | head -5
-              find /tmp/sb-squash -maxdepth 5 -name 'config' -path '*/repo/*' 2>/dev/null | head -5 &&
-
-              echo '=== Copying ostree repo ==='
-              mkdir -p /workspace/ostree-repo
-              if [ -d /tmp/sb-squash/ostree/repo ]; then
-                cp -a /tmp/sb-squash/ostree/repo/* /workspace/ostree-repo/
-              elif [ -d /tmp/sb-squash/sysroot/ostree/repo ]; then
-                cp -a /tmp/sb-squash/sysroot/ostree/repo/* /workspace/ostree-repo/
-              else
-                echo 'ERROR: ostree repo not found in install.img'
-                find /tmp/sb-squash -maxdepth 4 -type d 2>/dev/null | head -30
-                exit 1
-              fi &&
-
-              echo '=== Verifying ostree repo ==='
-              ostree --repo=/workspace/ostree-repo log fedora/44/x86_64/silverblue 2>&1 | head -5 || true
-              ls -la /workspace/ostree-repo/objects/ 2>/dev/null | head -10
-              rm -f /tmp/fedora-silverblue.iso /tmp/sb-extract/install.img &&
-
-              echo '=== Building MeoLinux ISO ==='
-              livemedia-creator --make-iso \
-                --ks /workspace/kickstart/meolinux.ks \
-                --no-virt \
-                --resultdir /tmp/meolinux-build/ \
-                --project MeoLinux \
-                --releasever 44 \
-                --iso-name MeoLinux-44-x86_64.iso &&
-
-              cp /tmp/meolinux-build/*.iso /workspace/build/
-            "
+      - name: Build ISO
+        uses: ublue-os/lorax-compose@v1.0.0
+        id: build
+        with:
+          ostree-oci-ref: ghcr.io/fedora/fedora-silverblue:44
+          fedora-release: 44
+          output-dir: build
 
       - name: Generate checksum
         run: |
