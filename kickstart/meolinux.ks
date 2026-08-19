@@ -58,7 +58,7 @@ dracut-network
 
 # ---- 安装后配置脚本 ----
 
-# 基础配置（无需网络）
+# 基础配置（仅文件操作，无需 DBus）
 %post --erroronfail --log=/root/meolinux-post.log
 #!/bin/bash
 set -ex
@@ -75,14 +75,14 @@ export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 EOF
 
-# 设置时区
-timedatectl set-timezone Asia/Shanghai
+# 设置时区（直接写文件）
+ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
+echo "Asia/Shanghai" > /etc/timezone
 
 # 创建首次启动配置脚本
 cat > /usr/local/bin/meolinux-firstboot.sh << 'FIRSTBOOT'
 #!/bin/bash
 # MeoLinux 首次启动配置脚本
-
 echo "=== MeoLinux 首次启动配置 ==="
 
 # 启用 RPM Fusion 源
@@ -93,17 +93,13 @@ rpm-ostree install -y \
 # 安装中文字体
 rpm-ostree install -y \
   google-noto-sans-cjk-fonts \
-  google-noto-serif-cjk-fonts \
   wqy-microhei-fonts || true
 
 # 安装多媒体包
-rpm-ostree install -y \
-  ffmpeg \
-  gstreamer1-plugins-good || true
+rpm-ostree install -y ffmpeg || true
 
 # 安装中文输入法
-rpm-ostree install -y \
-  ibus-libpinyin || true
+rpm-ostree install -y ibus-libpinyin || true
 
 # 添加 Flathub
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo || true
@@ -135,8 +131,6 @@ RemainAfterExit=yes
 [Install]
 WantedBy=multi-user.target
 SERVICE
-
-systemctl enable meolinux-firstboot.service 2>/dev/null || true
 
 echo "MeoLinux 安装后配置完成"
 %end
