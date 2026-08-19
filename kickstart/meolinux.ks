@@ -1,35 +1,31 @@
 #version=DEVEL
-# MeoLinux Kickstart File
-# Based on Fedora Silverblue 44 for Chinese desktop users
+# MeoLinux Kickstart 文件
+# 基于 Fedora Silverblue 44，专为中国桌面用户打造
 
-# keyboard
+# 键盘布局
 keyboard --vckeymap=us --xlayouts='us'
 
-# System language
+# 系统语言 - 中文简体
 lang zh_CN.UTF-8
 
-# System timezone
+# 系统时区 - 中国标准时间
 timezone Asia/Shanghai --utc
 
-# Network configuration
+# 网络配置 - DHCP 自动获取
 network --bootproto=dhcp --activate --onboot=yes
 
-# Root password (insecure, for live image only - user should change on first boot)
-rootpw --plaintext --lock meolinux
-
-# User creation
-user --name=meo --groups=wheel --plaintext --password=meolinux
-
-# SELinux
+# SELinux 安全策略
 selinux --enforcing
 
-# Firewall
+# 防火墙 - 启用
 firewall --enabled --service=mdns
 
-# OSTree setup - Fedora Silverblue 44 (repo extracted from official ISO)
+# OSTree 设置 - Fedora Silverblue 44
+# 从安装介质中的 ostree 仓库安装基础系统
 ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///ostree/repo" --ref="fedora/44/x86_64/silverblue"
 
-# Disk partitioning
+# 磁盘分区方案
+# EFI 分区 + 引导分区 + 根分区 + 家目录分区
 zerombr
 clearpart --all --initlabel
 part /boot/efi --fstype=fat32 --size=600 --ondisk=sda
@@ -37,40 +33,42 @@ part /boot --fstype=xfs --size=1024 --ondisk=sda
 part / --fstype=xfs --size=20480 --grow --ondisk=sda
 part /home --fstype=xfs --size=10240 --ondisk=sda
 
-# Skip interactive setup
+# 跳过交互式设置
 skipx
 
-# Run the Setup Agent on first boot
+# 禁用首次启动向导
 firstboot --disable
 
-# Reboot after installation
+# 安装完成后重启
 reboot
 
-# Required packages for live ISO build
+# 安装基础系统包
 %packages
 dracut-live
 dracut-network
+@core
+@base-x
 %end
 
-# ---- Post-installation scripts ----
+# ---- 安装后配置脚本 ----
 
-# Configure Chinese mirrors and repos
+# 配置中文环境和软件源
 %post --erroronfail --log=/root/meolinux-post.log
 #!/bin/bash
 set -ex
 
-# Add Chinese locale
+# 设置中文语言环境
 localectl set-locale LANG=zh_CN.UTF-8
 
-# Configure Chinese timezone
+# 设置时区为上海
 timedatectl set-timezone Asia/Shanghai
 
-# Enable RPM Fusion repos (needed for multimedia, codecs, etc.)
+# 启用 RPM Fusion 软件源（多媒体编解码器等）
 rpm-ostree install -y \
   https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-44.noarch.rpm \
   https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-44.noarch.rpm
 
-# Install Chinese fonts
+# 安装中文字体
 rpm-ostree install -y \
   google-noto-sans-cjk-fonts \
   google-noto-serif-cjk-fonts \
@@ -78,7 +76,7 @@ rpm-ostree install -y \
   wqy-microhei-fonts \
   wqy-zenhei-fonts
 
-# Install common multimedia packages
+# 安装常用多媒体包
 rpm-ostree install -y \
   ffmpeg \
   gstreamer1-plugins-good \
@@ -86,35 +84,35 @@ rpm-ostree install -y \
   gstreamer1-plugins-ugly-free \
   gstreamer1-libav
 
-# Install Chinese input method
+# 安装中文输入法
 rpm-ostree install -y \
   ibus-libpinyin \
   ibus-rime
 
-# Set default locale in profile
-cat >> /etc/profile.d/meolinux.sh << 'EOF'
+# 设置默认语言环境
+cat > /etc/profile.d/meolinux.sh << 'EOF'
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 EOF
 
-# Configure Chinese timezone for users
-cat >> /etc/skel/.bashrc << 'EOF'
+# 为新用户配置默认环境
+cat > /etc/skel/.bashrc << 'EOF'
 export LANG=zh_CN.UTF-8
 export LC_ALL=zh_CN.UTF-8
 EOF
 
-echo "MeoLinux post-install completed successfully"
+echo "MeoLinux 安装后配置完成"
 %end
 
-# Install Flatpak applications
+# 安装 Flatpak 桌面应用
 %post --erroronfail --log=/root/meolinux-flatpak.log
 #!/bin/bash
 set -ex
 
-# Add Flathub repository
+# 添加 Flathub 应用仓库
 flatpak remote-add --if-not-exists flathub https://dl.flathub.org/repo/flathub.flatpakrepo
 
-# Install common desktop applications via Flatpak
+# 安装常用桌面应用
 flatpak install -y --user flathub \
   org.mozilla.firefox \
   org.libreoffice.LibreOffice \
@@ -122,15 +120,13 @@ flatpak install -y --user flathub \
   org.gnome.tweaks \
   org.gnome.Extensions \
   com.visualstudio.code \
-  org.mozilla.firefox \
   org.gimp.GIMP \
   org.videolan.VLC \
   org.telegram.desktop \
   com.slack.Slack \
-  io.github.shiftrix.Terminix \
   org.gnome.Calculator \
   org.gnome.Nautilus \
   org.gnome.TextEditor
 
-echo "MeoLinux Flatpak installation completed"
+echo "MeoLinux Flatpak 应用安装完成"
 %end
