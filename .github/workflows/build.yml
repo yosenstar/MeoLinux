@@ -56,10 +56,11 @@ jobs:
               find /tmp/sb-squash -maxdepth 5 -name 'config' -path '*/repo/*' 2>/dev/null | head -5 &&
 
               echo '=== Copying ostree repo ==='
+              mkdir -p /workspace/ostree-repo
               if [ -d /tmp/sb-squash/ostree/repo ]; then
-                cp -a /tmp/sb-squash/ostree/repo /ostree/repo
+                cp -a /tmp/sb-squash/ostree/repo/* /workspace/ostree-repo/
               elif [ -d /tmp/sb-squash/sysroot/ostree/repo ]; then
-                cp -a /tmp/sb-squash/sysroot/ostree/repo /ostree/repo
+                cp -a /tmp/sb-squash/sysroot/ostree/repo/* /workspace/ostree-repo/
               else
                 echo 'ERROR: ostree repo not found in install.img'
                 find /tmp/sb-squash -maxdepth 4 -type d 2>/dev/null | head -30
@@ -67,8 +68,8 @@ jobs:
               fi &&
 
               echo '=== Verifying ostree repo ==='
-              ostree --repo=/ostree/repo log fedora/44/x86_64/silverblue 2>&1 | head -5 || true
-              ls -la /ostree/repo/objects/ 2>/dev/null | head -10
+              ostree --repo=/workspace/ostree-repo log fedora/44/x86_64/silverblue 2>&1 | head -5 || true
+              ls -la /workspace/ostree-repo/objects/ 2>/dev/null | head -10
               rm -f /tmp/fedora-silverblue.iso /tmp/sb-extract/install.img &&
 
               echo '=== Building MeoLinux ISO ==='

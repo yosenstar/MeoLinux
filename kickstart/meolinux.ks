@@ -22,7 +22,7 @@ firewall --enabled --service=mdns
 
 # OSTree 设置 - Fedora Silverblue 44
 # 从安装介质中的 ostree 仓库安装基础系统
-ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///ostree/repo" --ref="fedora/44/x86_64/silverblue"
+ostreesetup --nogpg --osname="fedora" --remote="fedora" --url="file:///workspace/ostree-repo" --ref="fedora/44/x86_64/silverblue"
 
 # 磁盘分区方案
 # EFI 分区 + 引导分区 + 根分区 + 家目录分区
