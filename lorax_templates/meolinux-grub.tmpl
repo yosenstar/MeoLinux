@@ -1,0 +1,31 @@
+# Custom GRUB menu entry for MeoLinux
+# This template modifies the GRUB menu to show "MeoLinux" instead of "Fedora"
+
+# Create a custom grub.cfg snippet
+mkdir -p ${rootdir}/boot/grub2
+cat > ${rootdir}/boot/grub2/meolinux.cfg << 'EOF'
+# MeoLinux GRUB Configuration
+set default="0"
+set timeout=60
+
+menuentry 'MeoLinux 44' --class fedora --class gnu-linux --class gnu --class os {
+    linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=MeoLinux-44-x86_64 ro
+    initrd /images/pxeboot/initrd.img
+}
+
+menuentry 'MeoLinux 44 (Basic Graphics)' --class fedora --class gnu-linux --class gnu --class os {
+    linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=MeoLinux-44-x86_64 ro nomodeset
+    initrd /images/pxeboot/initrd.img
+}
+
+menuentry 'Test this media & start MeoLinux 44' --class fedora --class gnu-linux --class gnu --class os {
+    linux /images/pxeboot/vmlinuz inst.stage2=hd:LABEL=MeoLinux-44-x86_64 rd.live.check
+    initrd /images/pxeboot/initrd.img
+}
+EOF
+
+# Also create a custom installer title
+mkdir -p ${rootdir}/usr/share/anaconda
+cat > ${rootdir}/usr/share/anaconda/meolinux-title.txt << 'EOF'
+MeoLinux 44
+EOF

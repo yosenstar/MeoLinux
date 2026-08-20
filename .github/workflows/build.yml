@@ -29,6 +29,7 @@ jobs:
           version: "44"
           variant: silverblue
           iso_name: MeoLinux-44-x86_64.iso
+          additional_templates: "lorax_templates/meolinux-grub.tmpl"
 
       - name: Upload ISO artifact
         uses: actions/upload-artifact@v4
