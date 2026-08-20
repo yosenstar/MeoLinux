@@ -40,9 +40,11 @@ jobs:
           retention-days: 30
 
       - name: Release
-        if: startsWith(github.ref, 'refs/tags/v')
+        if: success()
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: build-${{ github.run_number }}
+          name: "Build ${{ github.run_number }}"
           files: |
             ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}
             ${{ steps.build.outputs.iso_path }}/${{ steps.build.outputs.iso_name }}-CHECKSUM
