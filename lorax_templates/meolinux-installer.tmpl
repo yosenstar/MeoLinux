@@ -1,0 +1,101 @@
+# Custom Anaconda Installer for MeoLinux
+# This template customizes the Anaconda installer appearance and branding
+
+# Create custom .buildstamp file for product name
+mkdir -p ${rootdir}/usr/share/anaconda
+cat > ${rootdir}/usr/share/anaconda/.buildstamp << 'EOF'
+# Anaconda installer buildstamp file
+# Timezone wrapper
+utc=True
+# Language
+lang=en_US.UTF-8
+# Keyboard
+keyboard=us
+# Product info
+Product=MeoLinux
+Foo=bar
+# Base product
+Base Product=Fedora
+EOF
+
+# Create custom Anaconda configuration
+mkdir -p ${rootdir}/usr/share/anaconda/product.d
+cat > ${rootdir}/usr/share/anaconda/product.d/meolinux.conf << 'EOF'
+[Product]
+product_name=MeoLinux
+
+[Base Product]
+base_product=Fedora
+
+[Anaconda]
+# Installer configuration
+EOF
+
+# Create custom branding CSS for Anaconda Web UI
+mkdir -p ${rootdir}/usr/share/cockpit/branding
+cat > ${rootdir}/usr/share/cockpit/branding/branding.css << 'EOF'
+/* MeoLinux Branding for Anaconda Web UI */
+.anaconda {
+    /* Brand palette - MeoLinux colors */
+    --brand-default-light: #61afef;
+    --brand-default: #528bff;
+    --brand-default-dark: #1e90ff;
+
+    .logo {
+        background-image: url("logo.png");
+    }
+}
+
+/* Light theme */
+:not(.pf-v6-theme-dark) .anaconda {
+    --pf-t--global--color--brand--default: var(--brand-default);
+    --pf-t--global--color--brand--hover: var(--brand-default-dark);
+}
+
+/* Dark theme */
+.pf-v6-theme-dark .anaconda {
+    --pf-t--global--color--brand--default: var(--brand-default-light);
+    --pf-t--global--color--brand--hover: var(--brand-default);
+}
+EOF
+
+# Create a simple logo placeholder
+mkdir -p ${rootdir}/usr/share/cockpit/branding
+cat > ${rootdir}/usr/share/cockpit/branding/logo << 'EOF'
+# MeoLinux Logo Placeholder
+# Replace this with actual logo.png file
+EOF
+
+# Create custom Anaconda GTK CSS (for classic installer)
+mkdir -p ${rootdir}/usr/share/anaconda
+cat > ${rootdir}/usr/share/anaconda/anaconda-gtk.css << 'EOF'
+/* MeoLinux Anaconda GTK Theme */
+
+@define-color product_bg_color #528bff;
+
+/* Logo and sidebar classes */
+.logo-sidebar {
+    background-image: url('/usr/share/anaconda/pixmaps/sidebar-bg.png');
+    background-color: @product_bg_color;
+    background-repeat: no-repeat;
+}
+
+.logo {
+    background-image: url('/usr/share/anaconda/pixmaps/sidebar-logo.png');
+    background-position: 50% 20px;
+    background-repeat: no-repeat;
+    background-color: transparent;
+}
+
+.product-logo {
+    background-image: none;
+    background-color: transparent;
+}
+
+AnacondaSpokeWindow #nav-box {
+    background-color: @product_bg_color;
+    background-image: url('/usr/share/anaconda/pixmaps/topbar-bg.png');
+    background-repeat: no-repeat;
+    color: white;
+}
+EOF
